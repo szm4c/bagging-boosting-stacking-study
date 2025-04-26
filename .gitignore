@@ -1,0 +1,80 @@
+########################################################################
+#  Bagging/Boosting/Stacking Study – .gitignore                        #
+#  A Python / scikit-learn / Jupyter project that ships data,          #
+#  notebooks, models and figures.                                      #
+########################################################################
+
+###########################
+# 1. Python build artefacts
+###########################
+__pycache__/
+*.py[cod]
+*.pyd
+*.so
+*.dylib
+*.egg-info/
+*.egg
+.eggs/
+dist/
+build/
+pip-wheel-metadata/
+
+###############
+# 2. Environments
+###############
+.env
+.venv
+env/
+venv/
+conda-meta/
+
+###########################
+# 3. Jupyter & Jupytext
+###########################
+.ipynb_checkpoints/
+# Notebooks themselves are **kept** under version control.
+# If you convert with jupytext, the paired script files live next to the 
+# ipynb and should be tracked, so we do NOT ignore *.py here.
+
+###########################
+# 4. Data & generated artefacts
+###########################
+# Raw CSVs that are small live in data/raw/ and ARE tracked.
+# Anything generated or heavy gets ignored.
+data/synthetic/
+data/processed/
+data/external/
+data/**/*.{zip,tar.gz,tar,bz2,7z}
+# Optional scratch space
+scratch/
+.tmp/
+
+###########################
+# 5. Model artefacts & experiment outputs
+###########################
+models/
+checkpoints/
+runs/              # e.g. mlflow, tensorboard
+reports/figures/
+reports/tables/
+predictions/
+
+###########################
+# 6. Logs, coverage, profiling
+###########################
+*.log
+logs/
+coverage.xml
+htmlcov/
+profiler_output/
+
+###########################
+# 7. Editor & OS cruft
+###########################
+.vscode/
+.idea/
+*.sublime*
+*.code-workspace
+.DS_Store
+Thumbs.db
+*~

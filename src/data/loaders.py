@@ -9,31 +9,52 @@ from sklearn.datasets import (
 # Global Vars
 ROOT_PATH = pathlib.Path(__file__).resolve().parents[2]      # project-root
 RAW_DATA_PATH = ROOT_PATH / "data" / "raw"
-SEED = 42
+SEED = 333
 
 def _generate_regression_dataset() -> pd.DataFrame:
     """Generate a toy regression dataset using sklearn."""
-    pass
+    X, y = make_regression(n_samples = 1000, n_features = 20, n_informative = 5, noise = 30, random_state = SEED)
+
+    X_df = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(X.shape[1])])
+    y_df = pd.DataFrame(y, columns=['traget'])
+
+    df = pd.concat([X_df, y_df], axis=1)
+
+    return df
 
 def _generate_friedman1_dataset() -> pd.DataFrame:
     """Generate a Friedman #1 regression dataset."""
-    pass
+    X, y = make_friedman1(n_samples = 500, noise = 0.5, random_state = SEED)
+
+    X_df = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(X.shape[1])])
+    y_df = pd.DataFrame(y, columns=['traget'])
+
+    df = pd.concat([X_df, y_df], axis=1)
+
+    return df
 
 def _generate_friedman3_dataset() -> pd.DataFrame:
     """Generate a Friedman #3 regression dataset."""
-    pass
+    X, y = make_friedman3(n_samples = 2000, noise = 1.0, random_state = SEED)
+
+    X_df = pd.DataFrame(X, columns=[f'feature_{i}' for i in range(X.shape[1])])
+    y_df = pd.DataFrame(y, columns=['traget'])
+
+    df = pd.concat([X_df, y_df], axis=1)
+
+    return df
 
 def _get_california_housing_dataset() -> pd.DataFrame:
     """Load the California housing CSV from raw data."""
-    return pd.load_csv()
+    return pd.read_csv(RAW_DATA_PATH / 'california_housing.csv')
 
 def _get_airfloil_self_noise_dataset() -> pd.DataFrame:
     """Load the Airfoil Self-Noise CSV from raw data."""
-    return pd.load_csv()
+    return pd.read_csv(RAW_DATA_PATH / 'airfoil_self_noise.csv')
 
 def _get_energy_efficiency_dataset() -> pd.DataFrame:
     """Load the Energy Efficiency CSV from raw data."""
-    return pd.load_csv()
+    return pd.read_csv(RAW_DATA_PATH / 'energy_efficiency.csv')
 
 def load_dataset(dataset_name: str) -> pd.DataFrame:
     if not isinstance(dataset_name, str):

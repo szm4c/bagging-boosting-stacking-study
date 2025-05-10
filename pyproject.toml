@@ -1,0 +1,32 @@
+# pyproject.toml
+
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bagging-boosting-stacking-study"
+version = "0.1.0"
+description = "Comparative study of bagging, boosting, and stacking methods on synthetic and real datasets"
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+authors = [
+  { name = "Szymon Pawlowski", email = "szy.pawlo@gmail.com" },
+]
+
+dependencies = [
+  "numpy>=2.2,<3.0",
+  "pandas>=2.2,<3.0",
+  "scikit-learn>=1.6,<2.0",
+  "scipy>=1.15,<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7.0,<8.0",
+  "flake8>=6.0,<7.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+exclude = ["tests*"]

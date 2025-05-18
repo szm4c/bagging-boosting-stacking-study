@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from bagging_boosting_stacking_study.constants import DATASET_NAMES
 
@@ -20,7 +21,56 @@ def clean_friedman1(df_raw: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_friedman3(df_raw: pd.DataFrame) -> pd.DataFrame:
-    raise NotImplementedError("`clean_friedman3` function is not impemented")
+    """Generic preprocessing for the Friedman #3 dataset.
+
+    The routine leaves every original column untouched and **adds**
+    deterministic, model-agnostic features:
+
+    * ``feature_1*feature_2`` (interaction term)
+    * ``feature_1**2`` (quadratic term)
+    * ``feature_2**2`` (quadratic term)
+    * ``feature_2_bin`` - three-level categorical copy of *feature 2*
+    * one-hot dummies: ``feature_2_low``, ``feature_2_med``, ``feature_2_high``
+
+    No scaling, splitting, missing-value handling, or target transforms are
+    applied—those remain the responsibility of downstream model pipelines.
+
+    Args:
+        df_raw: Raw Friedman #3 dataframe as produced by
+            ``load_dataset("friedman3")``. It must contain the columns
+            ``feature_0`` … ``feature_4`` **and** ``target``.
+
+    Returns:
+        Copy of the input with the additional engineered columns
+        appended; row order is preserved and no rows are dropped.
+
+    """
+    df = df_raw.copy()  # work on copy
+
+    # 1. Interaction & polynomial terms
+    df["feature_1*feature_2"] = df["feature_1"] * df["feature_2"]
+    df["feature_1**2"] = df["feature_1"] ** 2
+    df["feature_2**2"] = df["feature_2"] ** 2
+
+    # 2. Equal-width bins for feature_2 → categorical + dummies
+    n_bins = 3
+    labels = ["low", "med", "high"]
+
+    f2_min, f2_max = df["feature_2"].min(), df["feature_2"].max()
+    edges = np.linspace(f2_min, f2_max, num=n_bins + 1)
+
+    df["feature_2_bin"] = pd.cut(
+        df["feature_2"],
+        bins=edges,
+        labels=labels,
+        include_lowest=True,
+        # right=False,
+    )
+
+    dummies = pd.get_dummies(df["feature_2_bin"], prefix="feature_2")
+    df = pd.concat([df, dummies], axis=1).sort_index(axis=1)
+
+    return df
 
 
 def clean_airfoil_self_noise(df_raw: pd.DataFrame) -> pd.DataFrame:

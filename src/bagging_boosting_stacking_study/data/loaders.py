@@ -1,4 +1,3 @@
-import pathlib
 import pandas as pd
 from sklearn.datasets import (
     make_regression,
@@ -7,9 +6,8 @@ from sklearn.datasets import (
 )
 
 # Global Vars
-ROOT_PATH = pathlib.Path(__file__).resolve().parents[2]  # project-root
-RAW_DATA_PATH = ROOT_PATH / "data" / "raw"
-SEED = 333
+from bagging_boosting_stacking_study.constants import SEED, RAW_DATA_PATH, DATASET_NAMES
+
 GENERATORS_CONFIG = {
     "regression": dict(n_samples=1000, n_features=10, n_informative=8, noise=3),
     "friedman1": dict(n_samples=5000, n_features=20, noise=0.5),
@@ -68,19 +66,11 @@ def load_dataset(dataset_name: str) -> pd.DataFrame:
             f"Argument `dataset_name` must be a string, got {type(dataset_name)}"
         )
 
-    possible_dataset_names = [
-        "regression",
-        "friedman1",
-        "friedman3",
-        "california_housing",
-        "airfoil_self_noise",
-        "energy_efficiency",
-    ]
     dataset_name = dataset_name.strip().lower()
-    if dataset_name not in possible_dataset_names:
+    if dataset_name not in DATASET_NAMES:
         raise ValueError(
             f"{dataset_name} is not a valid dataset name. "
-            f"Possible options are {possible_dataset_names}"
+            f"Possible options are {DATASET_NAMES}"
         )
 
     # dispatch to the correct loader/generator

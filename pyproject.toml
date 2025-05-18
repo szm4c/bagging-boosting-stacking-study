@@ -30,3 +30,6 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["src"]
 exclude = ["tests*"]
+
+[project.scripts]
+make-processed = "bagging_boosting_stacking_study.scripts.make_processed:main"

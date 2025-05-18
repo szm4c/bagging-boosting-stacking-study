@@ -6,7 +6,12 @@ from sklearn.datasets import (
 )
 
 # Global Vars
-from bagging_boosting_stacking_study.constants import SEED, RAW_DATA_PATH, DATASET_NAMES
+from bagging_boosting_stacking_study.constants import (
+    SEED,
+    RAW_DATA_PATH,
+    PROCESSED_DATA_PATH,
+    DATASET_NAMES,
+)
 
 GENERATORS_CONFIG = {
     "regression": dict(n_samples=1000, n_features=10, n_informative=8, noise=3),
@@ -60,7 +65,7 @@ def _get_energy_efficiency_dataset() -> pd.DataFrame:
     return pd.read_csv(RAW_DATA_PATH / "energy_efficiency.csv")
 
 
-def load_dataset(dataset_name: str) -> pd.DataFrame:
+def load_dataset(dataset_name: str, raw: bool = True) -> pd.DataFrame:
     if not isinstance(dataset_name, str):
         raise TypeError(
             f"Argument `dataset_name` must be a string, got {type(dataset_name)}"
@@ -73,14 +78,25 @@ def load_dataset(dataset_name: str) -> pd.DataFrame:
             f"Possible options are {DATASET_NAMES}"
         )
 
-    # dispatch to the correct loader/generator
-    loaders = {
-        "regression": _generate_regression_dataset,
-        "friedman1": _generate_friedman1_dataset,
-        "friedman3": _generate_friedman3_dataset,
-        "california_housing": _get_california_housing_dataset,
-        "airfoil_self_noise": _get_airfoil_self_noise_dataset,
-        "energy_efficiency": _get_energy_efficiency_dataset,
-    }
+    if raw:
+        # raw branch -- dispatch to the correct loader/generator
+        loaders = {
+            "regression": _generate_regression_dataset,
+            "friedman1": _generate_friedman1_dataset,
+            "friedman3": _generate_friedman3_dataset,
+            "california_housing": _get_california_housing_dataset,
+            "airfoil_self_noise": _get_airfoil_self_noise_dataset,
+            "energy_efficiency": _get_energy_efficiency_dataset,
+        }
 
-    return loaders[dataset_name]()
+        return loaders[dataset_name]()
+
+    # processed branch
+    csv_path = PROCESSED_DATA_PATH / f"{dataset_name}.csv"
+    try:
+        return pd.read_csv(csv_path)
+    except FileNotFoundError as e:
+        raise FileNotFoundError(
+            f"Processed file not found at {csv_path}. "
+            "Run `make-processed` first or set raw=True."
+        ) from e

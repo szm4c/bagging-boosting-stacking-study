@@ -33,3 +33,4 @@ exclude = ["tests*"]
 
 [project.scripts]
 make-processed = "bagging_boosting_stacking_study.scripts.make_processed:main"
+run-benchmark = "bagging_boosting_stacking_study.scripts.run_benchmark:main"

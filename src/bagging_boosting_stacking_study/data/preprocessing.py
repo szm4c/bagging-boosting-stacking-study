@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import RobustScaler
+from sklearn.cluster import KMeans
 from bagging_boosting_stacking_study.constants import DATASET_NAMES
 
 
@@ -183,7 +185,82 @@ def clean_airfoil_self_noise(df_raw: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_california_housing(df_raw: pd.DataFrame) -> pd.DataFrame:
-    raise NotImplementedError("`clean_california_housing` function is not impemented")
+    """
+    Generic preprocessing for the California Housing dataset.
+
+    This function implements the full standard pipeline:
+      1. Copy the raw DataFrame.
+      2. Log1p-transform heavily skewed features (Population, AveRooms, AveBedrms).
+      3. Winsorize those same features at the 1st and 99th percentiles.
+      4. (Optional) Add binary outlier-flags for the skewed features.
+      5. Combine pairs of correlated features via PCA:
+         - Latitude & Longitude → Geo1
+         - AveRooms & AveBedrms → RoomsPC
+      6. Create derived features:
+         - MedInc x RoomsPC
+         - MedInc squared (MedInc²)
+         - HouseAge binned into 4 groups
+         - MedInc quartile bands
+         - HouseholdDensity = Population / AveOccup
+      7. Unsupervised segmentation:
+         - 2-component PCA on all numeric features (excluding target)
+         - KMeans clustering (3 clusters) on the PCA embedding
+         - One-hot encode the resulting RegionCluster labels
+      8. Robust-scaling (median & IQR) on all numeric features except target.
+
+    Args:
+        df_raw: Raw California Housing DataFrame as fetched from sklearn.
+            Must contain columns: 'MedInc', 'HouseAge', 'AveRooms',
+            'AveBedrms', 'Population', 'AveOccup', 'Latitude', 'Longitude', and 'target'.
+
+    Returns:
+        A cleaned pandas DataFrame with:
+          - Skewed features log1p-transformed, winsorized, and flagged
+          - PCA components 'Geo1' and 'RoomsPC' replacing their originals
+          - Derived interaction, polynomial, bin, and density features
+          - One-hot encoded region clusters
+          - All numeric predictors robust-scaled
+        Row order is preserved.
+    """
+    df = df_raw.copy()
+
+    # 1. Outlier handling: log1p + winsorize + outlier flags
+    skewed = ['Population', 'AveRooms', 'AveBedrms']
+    for col in skewed:
+        df[col] = np.log1p(df[col])
+        lower, upper = df[col].quantile([0.01, 0.99])
+        df[f'{col}_outlier'] = ((df[col] < lower) | (df[col] > upper)).astype(int)
+        df[col] = df[col].clip(lower, upper)
+
+    # 2. Correlated feature reduction via PCA
+    pca_geo = PCA(n_components=1)
+    df['Geo1'] = pca_geo.fit_transform(df[['Latitude', 'Longitude']])
+    pca_rooms = PCA(n_components=1)
+    df['RoomsPC'] = pca_rooms.fit_transform(df[['AveRooms', 'AveBedrms']])
+    df.drop(columns=['Latitude', 'Longitude', 'AveRooms', 'AveBedrms'], inplace=True)
+
+    # 3. Derived features: interactions, polynomial, binning, density
+    df['MedInc_x_RoomsPC'] = df['MedInc'] * df['RoomsPC']
+    df['MedInc_sq'] = df['MedInc'] ** 2
+    df['HouseAge_bin'] = pd.cut(df['HouseAge'], bins=[0,10,20,40,100], labels=False)
+    df['MedInc_bin']  = pd.qcut(df['MedInc'], 4, labels=False)
+    df['HouseholdDensity'] = df_raw['Population'] / df_raw['AveOccup']
+
+    # 4. Unsupervised segmentation: KMeans on PCA of all numeric features
+    pca_full = PCA(n_components=2)
+    numeric = df.select_dtypes(include=np.number).drop(columns=['target'])
+    proj = pca_full.fit_transform(numeric)
+    kmeans = KMeans(n_clusters=3)
+    df['RegionCluster'] = kmeans.fit_predict(proj)
+    df = pd.get_dummies(df, columns=['RegionCluster'], prefix='Region')
+
+    # 5. Scaling: RobustScaler on all numeric features except target
+    scaler = RobustScaler()
+    num_cols = df.select_dtypes(include=np.number).columns.tolist()
+    num_cols.remove('target')
+    df[num_cols] = scaler.fit_transform(df[num_cols])
+
+    return df
 
 
 def clean_energy_efficiency(df_raw: pd.DataFrame) -> pd.DataFrame:

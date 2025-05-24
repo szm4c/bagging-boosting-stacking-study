@@ -17,7 +17,46 @@ def clean_regression(df_raw: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_friedman1(df_raw: pd.DataFrame) -> pd.DataFrame:
-    raise NotImplementedError("`clean_friedman1` function is not impemented")
+    """
+    Pre-process the Friedman-1 regression dataset.
+
+    The routine adds three deterministic features retained from EDA and
+    then removes columns that showed negligible (< 0.20) Pearson
+    correlation with the target.
+
+    **Added features**
+
+    * ``feature_0*feature_1`` — first-order interaction term
+    * ``feature_2**2`` — quadratic term of *feature 2*
+    * ``feature_2**2-feature_2`` — centered quadratic term
+      (``feature_2**2 - feature_2``)
+
+    **Dropped features**
+
+    * ``feature_2``
+    * ``feature_5`` through ``feature_19`` (inclusive)
+
+    Args:
+        df_raw: Original Friedman-1 dataframe containing at least
+            ``feature_0`` … ``feature_19`` and ``target``.
+
+    Returns:
+        A copy of *df_raw* with the engineered features appended and the
+        low-signal columns removed; row order is preserved.
+
+    """
+    df = df_raw.copy()  # work on copy
+
+    # Interaction and polynomial terms
+    df["feature_0*feature_1"] = df["feature_0"] * df["feature_1"]
+    df["feature_2**2"] = df["feature_2"] ** 2
+    df["feature_2**2-feature_2"] = df["feature_2**2"] - df["feature_2"]
+
+    # Drop features with correlation < 0.2
+    features_to_drop = [f"feature_{i}" for i in range(5, 20)] + ["feature_2"]
+    df = df.drop(columns=features_to_drop, errors="ignore").sort_index(axis=1)
+
+    return df
 
 
 def clean_friedman3(df_raw: pd.DataFrame) -> pd.DataFrame:

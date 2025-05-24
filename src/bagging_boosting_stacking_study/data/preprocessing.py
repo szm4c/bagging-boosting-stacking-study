@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from sklearn.decomposition import PCA
 from bagging_boosting_stacking_study.constants import DATASET_NAMES
 
 
@@ -17,7 +18,46 @@ def clean_regression(df_raw: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_friedman1(df_raw: pd.DataFrame) -> pd.DataFrame:
-    raise NotImplementedError("`clean_friedman1` function is not impemented")
+    """
+    Pre-process the Friedman-1 regression dataset.
+
+    The routine adds three deterministic features retained from EDA and
+    then removes columns that showed negligible (< 0.20) Pearson
+    correlation with the target.
+
+    **Added features**
+
+    * ``feature_0*feature_1`` — first-order interaction term
+    * ``feature_2**2`` — quadratic term of *feature 2*
+    * ``feature_2**2-feature_2`` — centered quadratic term
+      (``feature_2**2 - feature_2``)
+
+    **Dropped features**
+
+    * ``feature_2``
+    * ``feature_5`` through ``feature_19`` (inclusive)
+
+    Args:
+        df_raw: Original Friedman-1 dataframe containing at least
+            ``feature_0`` … ``feature_19`` and ``target``.
+
+    Returns:
+        A copy of *df_raw* with the engineered features appended and the
+        low-signal columns removed; row order is preserved.
+
+    """
+    df = df_raw.copy()  # work on copy
+
+    # Interaction and polynomial terms
+    df["feature_0*feature_1"] = df["feature_0"] * df["feature_1"]
+    df["feature_2**2"] = df["feature_2"] ** 2
+    df["feature_2**2-feature_2"] = df["feature_2**2"] - df["feature_2"]
+
+    # Drop features with correlation < 0.2
+    features_to_drop = [f"feature_{i}" for i in range(5, 20)] + ["feature_2"]
+    df = df.drop(columns=features_to_drop, errors="ignore").sort_index(axis=1)
+
+    return df
 
 
 def clean_friedman3(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -74,7 +114,72 @@ def clean_friedman3(df_raw: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_airfoil_self_noise(df_raw: pd.DataFrame) -> pd.DataFrame:
-    raise NotImplementedError("`clean_airfoil_self_noise` function is not impemented")
+    """
+    Generic preprocessing for the Airfoil Self-Noise dataset.
+
+    This function implements the full standard pipeline:
+      1. Copy & rename SSPL to target.
+      2. Remove domain-based outliers outside physically plausible ranges.
+      3. Winsorize numeric features at the 1st and 99th percentiles.
+      4. Apply natural log transformation plus one (log1p) to frequency (f) and thickness (delta).
+      5. Create derived features: f * delta, delta squared (delta^2), alpha squared (alpha^2).
+      6. Address multicollinearity by applying PCA on alpha and delta to produce alpha_delta_pc1.
+      7. One-hot encode chord length (c) for categorical modeling.
+
+    Args:
+        df_raw: Raw Airfoil Self-Noise dataframe as loaded from CSV.
+            Must contain columns: 'f', 'alpha', 'c', 'U_infinity', 'delta', and 'SSPL'.
+
+    Returns:
+        A cleaned pandas DataFrame with the following applied:
+          - 'SSPL' renamed to 'target'
+          - Rows outside defined physical bounds removed
+          - Numeric features winsorized
+          - Log1p transforms on 'f' and 'delta'
+          - Derived features 'f_delta', 'delta_squared', 'alpha_squared'
+          - PCA-combined 'alpha_delta_pc1'
+          - One-hot encoded 'c' columns
+        Row order is preserved.
+    """
+
+    # 1. Copy & rename
+    df = df_raw.copy().rename(columns={"SSPL": "target"})
+
+    # 2. Domain-based outlier removal
+    bounds = {
+        "f": (100, 10000),
+        "alpha": (-20, 20),
+        "c": (0.01, 0.5),
+        "U_infinity": (1, 100),
+        "delta": (0.001, 0.1),
+        "target": (20, 200),
+    }
+    for col, (low, high) in bounds.items():
+        df = df[(df[col] >= low) & (df[col] <= high)]
+
+    # 3. Winsorize extremes
+    for col in ["f", "alpha", "c", "U_infinity", "delta", "target"]:
+        low_q, high_q = df[col].quantile([0.01, 0.99])
+        df[col] = df[col].clip(low_q, high_q)
+
+    # 4. Log1p transforms
+    df["f"] = np.log1p(df["f"])
+    df["delta"] = np.log1p(df["delta"])
+
+    # 5. Derived features
+    df["f_delta"] = df["f"] * df["delta"]
+    df["delta_squared"] = df["delta"] ** 2
+    df["alpha_squared"] = df["alpha"] ** 2
+
+    # 6. PCA on alpha + delta
+    pca = PCA(n_components=1)
+    df["alpha_delta_pc1"] = pca.fit_transform(df[["alpha", "delta"]])
+    df = df.drop(columns=["alpha", "delta"])
+
+    # 7. One-hot encode chord 'c'
+    df = pd.get_dummies(df, columns=["c"], prefix="c")
+
+    return df
 
 
 def clean_california_housing(df_raw: pd.DataFrame) -> pd.DataFrame:

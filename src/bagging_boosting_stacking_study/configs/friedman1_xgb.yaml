@@ -1,0 +1,14 @@
+updated: '2025-05-24T22:11:13'
+metric: 0.5308291244292738
+params:
+  n_estimators: 3000
+  learning_rate: 0.02010903042778187
+  max_depth: 2
+  min_child_weight: 0.5318510238039913
+  subsample: 0.3
+  colsample_bytree: 0.3
+  gamma: 0.4511270522982942
+  reg_lambda: 1.729558045703729
+  reg_alpha: 0.49622295918270054
+  max_delta_step: 3
+  grow_policy: depthwise

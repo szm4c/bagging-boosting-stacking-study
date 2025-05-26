@@ -49,7 +49,7 @@ scratch/
 ###########################
 # 5. Model artefacts & experiment outputs
 ###########################
-models/
+trained_models/
 checkpoints/
 runs/              # e.g. mlflow, tensorboard
 reports/figures/

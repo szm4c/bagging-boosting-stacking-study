@@ -125,14 +125,25 @@ def build_xgb(train_df, params):
 
 
 def build_stack(train_df, dataset_name):
-    # --- base learners (same as before) ---------------------------------
+    # base-learner parameters
     rf_params = load_params(dataset=dataset_name, model="rf")["params"]
-    xgb_params = load_params(dataset=dataset_name, model="xgb")["params"]
+    xgb_raw = load_params(dataset=dataset_name, model="xgb")["params"]
 
+    # build RF + XGB pipelines
     rf_pipeline = build_rf(train_df, rf_params)
-    xgb_pipeline = build_xgb(train_df, xgb_params)
+
+    # XGB needs its prep_choice and cleaned params
+    xgb_params, prep_choice = _clean_xgb_params(xgb_raw)
+    xgb_pipeline = build_xgb(train_df, xgb_raw)  # uses same params
+
+    # OLS pipeline must *match* the friedman3 preprocessing
+    ols_preproc = make_preprocessor(prep_choice, train_df)  # None on numeric sets
     ols_pipeline = Pipeline(
-        [("sc", StandardScaler()), ("ols", LinearRegression(n_jobs=-1))]
+        steps=([("prep", ols_preproc)] if ols_preproc else [])
+        + [
+            ("sc", StandardScaler()),
+            ("ols", LinearRegression(n_jobs=-1)),
+        ]
     )
 
     base_estimators = [
@@ -141,12 +152,12 @@ def build_stack(train_df, dataset_name):
         ("ols", ols_pipeline),
     ]
 
-    # meta-learner alpha comes from stack.yaml
+    # meta-learner alpha
     stack_cfg = load_params(dataset=dataset_name, model="stack")
-    best_alpha = stack_cfg["params"]["alpha"]  # <-- fixed line
+    best_alpha = stack_cfg["params"]["alpha"]
 
     meta_final = Pipeline(
-        [
+        steps=[
             ("sc", StandardScaler()),
             (
                 "ridge",
@@ -214,7 +225,3 @@ def main() -> None:
             out_file = Path(TRAINED_MODELS_PATH) / f"{dataset_name}_{model_name}.joblib"
             joblib.dump(model, out_file)
             print(f"done. saved to {out_file.name}")
-
-
-if __name__ == "__main__":
-    main()

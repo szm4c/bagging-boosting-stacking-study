@@ -1,0 +1,12 @@
+updated: '2025-05-25T22:56:00'
+metric: 0.3088824675702392
+params:
+  prep_choice: drop_all_cat
+  n_estimators: 600
+  cap_depth: false
+  min_samples_split: 22
+  min_samples_leaf: 7
+  max_features: 5
+  bootstrap: false
+  criterion: absolute_error
+  ccp_alpha: 0.0003661941147008318

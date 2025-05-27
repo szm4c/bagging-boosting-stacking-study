@@ -1,0 +1,13 @@
+updated: '2025-05-27T22:16:02'
+metric: 0.47663141024343536
+params:
+  n_estimators: 200
+  max_depth: 8
+  min_samples_split: 2
+  min_samples_leaf: 1
+  max_features: 12
+  bootstrap: true
+  max_samples: 1.0
+  criterion: absolute_error
+  ccp_alpha: 1.4156153920779745e-05
+  oob_score: false

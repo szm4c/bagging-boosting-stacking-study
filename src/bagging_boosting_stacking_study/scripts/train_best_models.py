@@ -125,36 +125,31 @@ def build_xgb(train_df, params):
 
 
 def build_stack(train_df, dataset_name):
-    # base-learner parameters
+    # Prepare data for fiting base learners (I'm using cv="prefit" for speed)
+    X = train_df.drop(columns="target")
+    y = train_df["target"].values
+
+    # Random-Forest base learner
     rf_params = load_params(dataset=dataset_name, model="rf")["params"]
-    xgb_raw = load_params(dataset=dataset_name, model="xgb")["params"]
-
-    # build RF + XGB pipelines
     rf_pipeline = build_rf(train_df, rf_params)
+    rf_pipeline.fit(X, y)
 
-    # XGB needs its prep_choice and cleaned params
-    xgb_params, prep_choice = _clean_xgb_params(xgb_raw)
-    xgb_pipeline = build_xgb(train_df, xgb_raw)  # uses same params
+    # XGBoost base learner
+    xgb_raw = load_params(dataset=dataset_name, model="xgb")["params"]
+    xgb_pipeline = build_xgb(train_df, xgb_raw)
+    xgb_pipeline.fit(X, y)
 
-    # OLS pipeline must *match* the friedman3 preprocessing
-    ols_preproc = make_preprocessor(prep_choice, train_df)  # None on numeric sets
+    # OLS base learner (with matching pre-processing)
+    _, prep_choice = _clean_xgb_params(xgb_raw)  # just to reuse prep_choice
+    ols_preproc = make_preprocessor(prep_choice, train_df)  # None for all-numeric
     ols_pipeline = Pipeline(
         steps=([("prep", ols_preproc)] if ols_preproc else [])
-        + [
-            ("sc", StandardScaler()),
-            ("ols", LinearRegression(n_jobs=-1)),
-        ]
+        + [("sc", StandardScaler()), ("ols", LinearRegression(n_jobs=-1))]
     )
+    ols_pipeline.fit(X, y)  # single fit
 
-    base_estimators = [
-        ("rf", rf_pipeline),
-        ("xgb", xgb_pipeline),
-        ("ols", ols_pipeline),
-    ]
-
-    # meta-learner alpha
-    stack_cfg = load_params(dataset=dataset_name, model="stack")
-    best_alpha = stack_cfg["params"]["alpha"]
+    # Meta-learner (Ridge on OOF-like preds)
+    best_alpha = load_params(dataset=dataset_name, model="stack")["params"]["alpha"]
 
     meta_final = Pipeline(
         steps=[
@@ -162,18 +157,26 @@ def build_stack(train_df, dataset_name):
             (
                 "ridge",
                 Ridge(
-                    alpha=best_alpha, solver="sag", max_iter=10_000, random_state=SEED
+                    alpha=best_alpha,
+                    solver="sag",
+                    max_iter=10_000,
+                    random_state=SEED,
                 ),
             ),
         ]
     )
 
-    cv_meta = KFold(n_splits=10, shuffle=True, random_state=SEED)
+    # StackingRegressor with cv="prefit"
+    base_estimators_prefit = [
+        ("rf", rf_pipeline),
+        ("xgb", xgb_pipeline),
+        ("ols", ols_pipeline),
+    ]
 
     return StackingRegressor(
-        estimators=base_estimators,
+        estimators=base_estimators_prefit,
         final_estimator=meta_final,
-        cv=cv_meta,
+        cv="prefit",  # no internal CV, base models are already fitted
         passthrough=False,
         n_jobs=-1,
     )

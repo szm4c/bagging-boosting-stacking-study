@@ -226,39 +226,39 @@ def clean_california_housing(df_raw: pd.DataFrame) -> pd.DataFrame:
     df = df_raw.copy()
 
     # 1. Outlier handling: log1p + winsorize + outlier flags
-    skewed = ['Population', 'AveRooms', 'AveBedrms']
+    skewed = ["Population", "AveRooms", "AveBedrms"]
     for col in skewed:
         df[col] = np.log1p(df[col])
         lower, upper = df[col].quantile([0.01, 0.99])
-        df[f'{col}_outlier'] = ((df[col] < lower) | (df[col] > upper)).astype(int)
+        df[f"{col}_outlier"] = ((df[col] < lower) | (df[col] > upper)).astype(int)
         df[col] = df[col].clip(lower, upper)
 
     # 2. Correlated feature reduction via PCA
     pca_geo = PCA(n_components=1)
-    df['Geo1'] = pca_geo.fit_transform(df[['Latitude', 'Longitude']])
+    df["Geo1"] = pca_geo.fit_transform(df[["Latitude", "Longitude"]])
     pca_rooms = PCA(n_components=1)
-    df['RoomsPC'] = pca_rooms.fit_transform(df[['AveRooms', 'AveBedrms']])
-    df.drop(columns=['Latitude', 'Longitude', 'AveRooms', 'AveBedrms'], inplace=True)
+    df["RoomsPC"] = pca_rooms.fit_transform(df[["AveRooms", "AveBedrms"]])
+    df.drop(columns=["Latitude", "Longitude", "AveRooms", "AveBedrms"], inplace=True)
 
     # 3. Derived features: interactions, polynomial, binning, density
-    df['MedInc_x_RoomsPC'] = df['MedInc'] * df['RoomsPC']
-    df['MedInc_sq'] = df['MedInc'] ** 2
-    df['HouseAge_bin'] = pd.cut(df['HouseAge'], bins=[0,10,20,40,100], labels=False)
-    df['MedInc_bin']  = pd.qcut(df['MedInc'], 4, labels=False)
-    df['HouseholdDensity'] = df_raw['Population'] / df_raw['AveOccup']
+    df["MedInc_x_RoomsPC"] = df["MedInc"] * df["RoomsPC"]
+    df["MedInc_sq"] = df["MedInc"] ** 2
+    df["HouseAge_bin"] = pd.cut(df["HouseAge"], bins=[0, 10, 20, 40, 100], labels=False)
+    df["MedInc_bin"] = pd.qcut(df["MedInc"], 4, labels=False)
+    df["HouseholdDensity"] = df_raw["Population"] / df_raw["AveOccup"]
 
     # 4. Unsupervised segmentation: KMeans on PCA of all numeric features
     pca_full = PCA(n_components=2)
-    numeric = df.select_dtypes(include=np.number).drop(columns=['target'])
+    numeric = df.select_dtypes(include=np.number).drop(columns=["target"])
     proj = pca_full.fit_transform(numeric)
     kmeans = KMeans(n_clusters=3)
-    df['RegionCluster'] = kmeans.fit_predict(proj)
-    df = pd.get_dummies(df, columns=['RegionCluster'], prefix='Region')
+    df["RegionCluster"] = kmeans.fit_predict(proj)
+    df = pd.get_dummies(df, columns=["RegionCluster"], prefix="Region")
 
     # 5. Scaling: RobustScaler on all numeric features except target
     scaler = RobustScaler()
     num_cols = df.select_dtypes(include=np.number).columns.tolist()
-    num_cols.remove('target')
+    num_cols.remove("target")
     df[num_cols] = scaler.fit_transform(df[num_cols])
 
     return df
@@ -300,31 +300,55 @@ def clean_energy_efficiency(df_raw: pd.DataFrame) -> pd.DataFrame:
     df = df_raw.copy()
 
     # 1. Engineered Features
-    df['Volume'] = df['Surface Area'] * df['Overall Height']
-    df['Surface_to_Volume_Ratio'] = df['Surface Area'] / df['Volume']
+    df["Volume"] = df["Surface Area"] * df["Overall Height"]
+    df["Surface_to_Volume_Ratio"] = df["Surface Area"] / df["Volume"]
 
-    df['Wall_to_Roof_Ratio'] = df['Wall Area'] / df['Roof Area']
-    df['Height_to_Wall_Ratio'] = df['Overall Height'] / df['Wall Area']
+    df["Wall_to_Roof_Ratio"] = df["Wall Area"] / df["Roof Area"]
+    df["Height_to_Wall_Ratio"] = df["Overall Height"] / df["Wall Area"]
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
     df.fillna(df.median(), inplace=True)
 
     # 2. Interaction Features
-    df['Glazing_x_Orientation'] = df['Glazing Area'] * df['Orientation']
-    df['Glazing_x_GlazingDist'] = df['Glazing Area'] * df['Glazing Area Distribution']
-    df['Surface_x_Compactness'] = df['Surface Area'] * df['Relative Compactness']
+    df["Glazing_x_Orientation"] = df["Glazing Area"] * df["Orientation"]
+    df["Glazing_x_GlazingDist"] = df["Glazing Area"] * df["Glazing Area Distribution"]
+    df["Surface_x_Compactness"] = df["Surface Area"] * df["Relative Compactness"]
 
     # 3. One-Hot Encoding of Categorical Variables
-    encoder_adv = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
-    df_encoded_adv = encoder_adv.fit_transform(df[['Orientation', 'Glazing Area Distribution']])
-    encoded_feature_names_adv = encoder_adv.get_feature_names_out(['Orientation', 'Glazing Area Distribution'])
-    df = df.drop(columns=['Orientation', 'Glazing Area Distribution'])
-    df = pd.concat([df.reset_index(drop=True), pd.DataFrame(df_encoded_adv, columns=encoded_feature_names_adv)], axis=1)
+    encoder_adv = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
+    df_encoded_adv = encoder_adv.fit_transform(
+        df[["Orientation", "Glazing Area Distribution"]]
+    )
+    encoded_feature_names_adv = encoder_adv.get_feature_names_out(
+        ["Orientation", "Glazing Area Distribution"]
+    )
+    df = df.drop(columns=["Orientation", "Glazing Area Distribution"])
+    df = pd.concat(
+        [
+            df.reset_index(drop=True),
+            pd.DataFrame(df_encoded_adv, columns=encoded_feature_names_adv),
+        ],
+        axis=1,
+    )
 
     # 4. Dropping columns
-    features_to_drop = ['Cooling Load', 'Surface Area', 'Overall Height', 'Orientation_3', 'Orientation_5', 'Orientation_2',
-                        'Orientation_4', 'Glazing Area Distribution_3', 'Glazing Area Distribution_5', 'Glazing Area Distribution_1', 
-                        'Glazing Area Distribution_4', 'Glazing Area Distribution_2']
-    df = df.drop(columns=features_to_drop, errors='ignore').sort_index(axis=1)
+    features_to_drop = [
+        "Cooling Load",
+        "Surface Area",
+        "Overall Height",
+        "Orientation_3",
+        "Orientation_5",
+        "Orientation_2",
+        "Orientation_4",
+        "Glazing Area Distribution_3",
+        "Glazing Area Distribution_5",
+        "Glazing Area Distribution_1",
+        "Glazing Area Distribution_4",
+        "Glazing Area Distribution_2",
+    ]
+    df = df.drop(columns=features_to_drop, errors="ignore").sort_index(axis=1)
+
+    # 5. Rename target column
+    df = df.rename(columns={"Heating Load": "target"})
 
     return df
 

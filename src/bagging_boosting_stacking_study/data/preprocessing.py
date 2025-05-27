@@ -4,6 +4,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import RobustScaler
 from sklearn.cluster import KMeans
 from bagging_boosting_stacking_study.constants import DATASET_NAMES
+from sklearn.preprocessing import OneHotEncoder
 
 
 def clean_regression(df_raw: pd.DataFrame) -> pd.DataFrame:
@@ -264,7 +265,68 @@ def clean_california_housing(df_raw: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_energy_efficiency(df_raw: pd.DataFrame) -> pd.DataFrame:
-    raise NotImplementedError("`clean_energy_efficiency` function is not impemented")
+    """Performs feature engineering and selection for the Energy Efficiency dataset.
+
+    This routine performs the following deterministic transformations and feature selections:
+
+    * **Engineered Features (derived from architectural characteristics):**
+        * `Volume` (Surface Area * Overall Height)
+        * `Surface_to_Volume_Ratio` (Surface Area / Volume)
+        * `Wall_to_Roof_Ratio` (Wall Area / Roof Area)
+        * `Height_to_Wall_Ratio` (Overall Height / Wall Area)
+    * **Interaction Features:**
+        * `Glazing_x_Orientation` (Glazing Area * Orientation)
+        * `Glazing_x_GlazingDist` (Glazing Area * Glazing Area Distribution)
+        * `Surface_x_Compactness` (Surface Area * Relative Compactness)
+    * **One-Hot Encoding:**
+        * Converts `Orientation` and `Glazing Area Distribution` into binary (one-hot encoded) features.
+    * **Column Dropping:**
+        * Removes the `Cooling Load` target variable (`Heating Load` is a chosen target).
+        * Drops original highly correlated features (`Surface Area`, `Overall Height`) that are superseded by engineered features.
+        * Removes specific low-importance one-hot encoded and interaction features based on prior analysis (e.g., specific orientation dummies, low-impact interaction terms).
+
+    Args:
+        df_raw: Raw Energy Efficiency dataframe containing architectural characteristics
+            (e.g., 'Relative Compactness', 'Surface Area', 'Wall Area', 'Roof Area',
+            'Overall Height', 'Orientation', 'Glazing Area', 'Glazing Area Distribution')
+            and target variables ('Heating Load', 'Cooling Load').
+
+    Returns:
+        Copy of the input dataframe with new engineered features, one-hot encoded
+        categorical variables, and selected low-importance/redundant columns removed.
+        Row order is preserved.
+    """
+
+    df = df_raw.copy()
+
+    # 1. Engineered Features
+    df['Volume'] = df['Surface Area'] * df['Overall Height']
+    df['Surface_to_Volume_Ratio'] = df['Surface Area'] / df['Volume']
+
+    df['Wall_to_Roof_Ratio'] = df['Wall Area'] / df['Roof Area']
+    df['Height_to_Wall_Ratio'] = df['Overall Height'] / df['Wall Area']
+    df.replace([np.inf, -np.inf], np.nan, inplace=True)
+    df.fillna(df.median(), inplace=True)
+
+    # 2. Interaction Features
+    df['Glazing_x_Orientation'] = df['Glazing Area'] * df['Orientation']
+    df['Glazing_x_GlazingDist'] = df['Glazing Area'] * df['Glazing Area Distribution']
+    df['Surface_x_Compactness'] = df['Surface Area'] * df['Relative Compactness']
+
+    # 3. One-Hot Encoding of Categorical Variables
+    encoder_adv = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
+    df_encoded_adv = encoder_adv.fit_transform(df[['Orientation', 'Glazing Area Distribution']])
+    encoded_feature_names_adv = encoder_adv.get_feature_names_out(['Orientation', 'Glazing Area Distribution'])
+    df = df.drop(columns=['Orientation', 'Glazing Area Distribution'])
+    df = pd.concat([df.reset_index(drop=True), pd.DataFrame(df_encoded_adv, columns=encoded_feature_names_adv)], axis=1)
+
+    # 4. Dropping columns
+    features_to_drop = ['Cooling Load', 'Surface Area', 'Overall Height', 'Orientation_3', 'Orientation_5', 'Orientation_2',
+                        'Orientation_4', 'Glazing Area Distribution_3', 'Glazing Area Distribution_5', 'Glazing Area Distribution_1', 
+                        'Glazing Area Distribution_4', 'Glazing Area Distribution_2']
+    df = df.drop(columns=features_to_drop, errors='ignore').sort_index(axis=1)
+
+    return df
 
 
 def preprocess_dataset(df: pd.DataFrame, dataset_name: str) -> pd.DataFrame:

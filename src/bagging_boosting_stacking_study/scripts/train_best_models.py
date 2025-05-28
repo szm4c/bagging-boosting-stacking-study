@@ -199,13 +199,13 @@ def build_model(model_name: str, train_df, dataset_name: str):
 
 
 # main loop
-MODELS = ["rf", "xgb", "stack"]
-
+MODELS = ["stack"]
+dataset_names_2 = ["california_housing"]
 
 def main() -> None:
     Path(TRAINED_MODELS_PATH).mkdir(parents=True, exist_ok=True)
 
-    for dataset_name in DATASET_NAMES:
+    for dataset_name in dataset_names_2:
         print(f"\nLoading {dataset_name} dataset...")
         df = load_dataset(dataset_name=dataset_name, raw=False)
 

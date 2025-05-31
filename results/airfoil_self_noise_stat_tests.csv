@@ -1,0 +1,10 @@
+Dataset,Metric,Model_A,Model_B,MeanDiff,Stat,p_value
+airfoil_self_noise,RMSE,Rf,Stack,0.37126390655108404,0.0,0.001953125
+airfoil_self_noise,RMSE,Rf,Xgb,0.3943567123109445,0.0,0.001953125
+airfoil_self_noise,RMSE,Stack,Xgb,0.023092805759860436,15.0,0.232421875
+airfoil_self_noise,MAE,Rf,Stack,0.33878397101081703,0.0,0.001953125
+airfoil_self_noise,MAE,Rf,Xgb,0.37156428972874644,0.0,0.001953125
+airfoil_self_noise,MAE,Stack,Xgb,0.03278031871792949,1.0,0.00390625
+airfoil_self_noise,R2,Rf,Stack,-0.024165826589314397,0.0,0.001953125
+airfoil_self_noise,R2,Rf,Xgb,-0.02522352551050854,0.0,0.001953125
+airfoil_self_noise,R2,Stack,Xgb,-0.001057698921194139,17.0,0.322265625

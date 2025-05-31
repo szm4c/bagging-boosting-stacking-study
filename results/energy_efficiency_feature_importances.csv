@@ -1,0 +1,25 @@
+Model,feature,importance
+Rf,Glazing Area,0.13387237658372003
+Rf,Glazing Area Distribution_0,0.010748029351060104
+Rf,Glazing_x_GlazingDist,0.018907051634803357
+Rf,Glazing_x_Orientation,0.017948108425900226
+Rf,Height_to_Wall_Ratio,0.12294203082102649
+Rf,Relative Compactness,0.14837025743276994
+Rf,Roof Area,0.10037171753691855
+Rf,Surface_to_Volume_Ratio,0.10827801852087215
+Rf,Surface_x_Compactness,0.03376542745630103
+Rf,Volume,0.12971930859818742
+Rf,Wall Area,0.041137391941193896
+Rf,Wall_to_Roof_Ratio,0.13394028169724684
+Xgb,Glazing Area,0.02288358472287655
+Xgb,Glazing Area Distribution_0,0.03919832035899162
+Xgb,Glazing_x_GlazingDist,0.0008628364885225892
+Xgb,Glazing_x_Orientation,0.00332497782073915
+Xgb,Height_to_Wall_Ratio,0.23916353285312653
+Xgb,Relative Compactness,0.5091845989227295
+Xgb,Roof Area,0.012989530339837074
+Xgb,Surface_to_Volume_Ratio,0.0
+Xgb,Surface_x_Compactness,0.005134701728820801
+Xgb,Volume,0.072017140686512
+Xgb,Wall Area,0.00138608377892524
+Xgb,Wall_to_Roof_Ratio,0.09385477006435394

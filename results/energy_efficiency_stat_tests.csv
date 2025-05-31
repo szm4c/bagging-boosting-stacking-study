@@ -1,0 +1,10 @@
+Dataset,Metric,Model_A,Model_B,MeanDiff,Stat,p_value
+energy_efficiency,RMSE,Rf,Stack,0.005154090712935516,20.0,0.4921875
+energy_efficiency,RMSE,Rf,Xgb,0.01319482199829638,16.0,0.275390625
+energy_efficiency,RMSE,Stack,Xgb,0.008040731285360864,16.0,0.275390625
+energy_efficiency,MAE,Rf,Stack,-0.002625757457425376,22.0,0.625
+energy_efficiency,MAE,Rf,Xgb,0.0011467698957864565,25.0,0.845703125
+energy_efficiency,MAE,Stack,Xgb,0.0037725273532118325,22.0,0.625
+energy_efficiency,R2,Rf,Stack,-2.5255659563583333e-05,23.0,0.6953125
+energy_efficiency,R2,Rf,Xgb,-0.00011316695939933563,15.0,0.232421875
+energy_efficiency,R2,Stack,Xgb,-8.79112998357523e-05,17.0,0.322265625

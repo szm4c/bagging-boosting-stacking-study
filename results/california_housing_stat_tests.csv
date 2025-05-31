@@ -1,0 +1,10 @@
+Dataset,Metric,Model_A,Model_B,MeanDiff,Stat,p_value
+california_housing,RMSE,Rf,Stack,-0.02078350403926832,0.0,0.001953125
+california_housing,RMSE,Rf,Xgb,0.04408138738364807,0.0,0.001953125
+california_housing,RMSE,Stack,Xgb,0.06486489142291639,0.0,0.001953125
+california_housing,MAE,Rf,Stack,-0.015235336965209956,0.0,0.001953125
+california_housing,MAE,Rf,Xgb,0.02748129429235962,0.0,0.001953125
+california_housing,MAE,Stack,Xgb,0.042716631257569575,0.0,0.001953125
+california_housing,R2,Rf,Stack,0.018846152232304493,0.0,0.001953125
+california_housing,R2,Rf,Xgb,-0.037729007735455865,0.0,0.001953125
+california_housing,R2,Stack,Xgb,-0.05657515996776036,0.0,0.001953125

@@ -1,0 +1,7 @@
+Dataset,Best_RMSE,Best_MAE,Best_R2
+regression,Xgb,Xgb,Stack
+friedman1,Xgb,Xgb,Xgb
+friedman3,Xgb,Xgb,Xgb
+california_housing,Xgb,Xgb,Xgb
+airfoil_self_noise,Xgb,Xgb,Xgb
+energy_efficiency,Rf,Rf,Rf

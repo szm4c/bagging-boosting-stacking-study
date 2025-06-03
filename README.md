@@ -1,3 +1,10 @@
+# Autorzy Projektu
+- Gabriela Jeznach
+- Monika Jarosińska
+- Karina Kownacka
+- Mariusz Wawrzycki
+- Szymon Pawłowski
+
 # Przegląd Projektu
 
 To repozytorium zawiera porównanie trzech popularnych metod ensemble-based dla problemu regresji:
